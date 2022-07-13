@@ -7,6 +7,7 @@ import numpy as np
 import nibabel
 import plotly.express as px
 import plotly.io as pio
+import cv2
 
 
 
@@ -210,7 +211,38 @@ class Scan:
         nibabel.save(nifti_file, output_path)
     
         return output_path
-    
+
+
+
+    def Vol_to_slices(self, output_root_dir, image_format = "PNG"):
+        volume_3D = self.vol
+        no_idx = self.vol.shape[0]
+        name = self.title
+
+        slice_image_list = []
+
+        if image_format == "PNG":
+            for idx in range(no_idx):
+                image_name = str(name + "_" + str(idx)+".png")
+                out_path = os.path.join(output_root_dir, image_name)
+                image = volume_3D[idx,:,:]
+                image=np.uint8(image)
+                cv2.imwrite(out_path, image)
+                slice_image_list.append(out_path)
+
+        elif image_format == "TIFF":
+            for idx in range(no_idx):
+                image_name = str(name + "_" + str(idx)+".tiff")
+                out_path = os.path.join(output_root_dir, image_name)
+                image = volume_3D[idx,:,:]
+                image=np.uint16(image)
+                cv2.imwrite(out_path, image)
+                slice_image_list.append(out_path)
+
+        else : print("Unsupported Image format for slices detected. Support may be added in future if deemed appropriate.")
+
+        return slice_image_list,
+
     
     def display_3D_volume(self, fig=False):
         
