@@ -8,6 +8,8 @@ import nibabel
 import plotly.express as px
 import plotly.io as pio
 import cv2
+import os
+from tqdm import tqdm
 
 
 
@@ -131,7 +133,7 @@ def dicom_to_volume(dicom_series):
 
 
 
-def get_scan_dict(dcm_series):
+def get_scan_dict(dcm_series, paitent_ID):
     '''
     '''
     paitent_dcm_collection = pread(dcm_series)
@@ -148,7 +150,7 @@ def get_scan_dict(dcm_series):
         scan_dict[f"{series_description}"] = dicom_series
 
     for k in scan_dict:
-        new_scan_dict[k] = Scan(k, scan_dict[k])
+        new_scan_dict[k] = Scan(k, scan_dict[k], paitent_ID)
         
     return new_scan_dict
 
@@ -158,8 +160,10 @@ def get_scan_dict(dcm_series):
 
 class Dataset(object):
     def __init__(self, paired_list):
-        for pair in paired_list:
-            setattr(self, processString(pair[1]), Paitent(pair[0]))
+        for pair in tqdm(paired_list):
+            path = pair[0]
+            title = processString(pair[1])
+            setattr(self, title, Paitent(path, paitent_ID=title))
         
     @property
     def paitent_list(self):
@@ -169,19 +173,36 @@ class Dataset(object):
     def num_paitents(self):
         return len(vars(self))
     
-
-
-        
-
+    def __iter__(self):
+        return iter(self.paitent_list.values())
+    
 
 class Paitent(object):
-    def __init__(self, initial_data):
-        initial_data = get_scan_dict(initial_data)
+    def __init__(self, initial_data, paitent_ID = None):
+        if paitent_ID is None:
+            self._paitent_ID ="UNNAMED_PATIENT"
+        else:
+            self._paitent_ID = paitent_ID
+        initial_data = get_scan_dict(initial_data, paitent_ID)
         for key in initial_data:
             setattr(self, key, initial_data[key])
             
-    def getName(self):
+    def _getName(self):
             return self.__class__.__name__
+        
+        
+    @property
+    def scan_list(self):
+        vars(self)
+        
+        # return [var for var in vars(self) if not var.startswith("_")]
+    
+    @property
+    def num_scans(self):
+        len(self.scan_list)
+        
+    def __iter__(self): 
+        return iter(self.scan_list.values())
     
     def __repr__(self):
         attrs = list(vars(self))
@@ -192,13 +213,12 @@ class Paitent(object):
 
 class Scan:
     
-    def __init__(self, title, dcm_series):
-        vol, pix_dim, affine = dicom_to_volume(dcm_series)
+    def __init__(self, title, dcm_series, paitent_ID=None):
+        self.paitent_ID = paitent_ID
+        self.vol, self.pix_dim, self.affine = dicom_to_volume(dcm_series)
         self.title = title
         self.dcm_series = dcm_series
-        self.vol = vol
-        self.pix_dim = pix_dim
-        self.affine = affine
+        self.paitent_ID = paitent_ID
         
     
     
@@ -221,27 +241,31 @@ class Scan:
 
         slice_image_list = []
 
+        try:
+            os.mkdir(output_root_dir)
+        except FileExistsError:
+            pass
+
         if image_format == "PNG":
             for idx in range(no_idx):
-                image_name = str(name + "_" + str(idx)+".png")
-                out_path = os.path.join(output_root_dir, image_name)
+                out_path = (f"{output_root_dir}/{name}_{idx}.png")
                 image = volume_3D[idx,:,:]
-                image=np.uint8(image)
-                cv2.imwrite(out_path, image)
+                image = np.uint8(image)
+                print(cv2.imwrite(out_path, image))
                 slice_image_list.append(out_path)
 
         elif image_format == "TIFF":
             for idx in range(no_idx):
-                image_name = str(name + "_" + str(idx)+".tiff")
-                out_path = os.path.join(output_root_dir, image_name)
+                out_path = (f"{output_root_dir}/{name}_{idx}.tiff")
                 image = volume_3D[idx,:,:]
-                image=np.uint16(image)
-                cv2.imwrite(out_path, image)
+                image = np.uint16(image)
+                print(cv2.imwrite(out_path, image))
                 slice_image_list.append(out_path)
+
 
         else : print("Unsupported Image format for slices detected. Support may be added in future if deemed appropriate.")
 
-        return slice_image_list,
+        return slice_image_list
 
     
     def display_3D_volume(self, fig=False):

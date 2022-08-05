@@ -2,10 +2,8 @@
 # coding: utf-8
 
 
-import dicom2nifti
 import os
 from tqdm import tqdm
-import dicom2nifti.settings as settings
 import os, sys
 
  
