@@ -156,8 +156,6 @@ def get_scan_dict(dcm_series, paitent_ID):
 
 
 
-
-
 class Dataset(object):
     def __init__(self, paired_list):
         for pair in tqdm(paired_list):
@@ -167,14 +165,15 @@ class Dataset(object):
         
     @property
     def paitent_list(self):
-        return vars(self)
+        return [var for var in vars(self) if not var.startswith("_")]
     
     @property
     def num_paitents(self):
         return len(vars(self))
     
     def __iter__(self):
-        return iter(self.paitent_list.values())
+        newdict = {k: vars(self)[k] for k in [var for var in vars(self) if not var.startswith("_")]}
+        return iter(newdict.values())
     
 
 class Paitent(object):
@@ -186,14 +185,16 @@ class Paitent(object):
         initial_data = get_scan_dict(initial_data, paitent_ID)
         for key in initial_data:
             setattr(self, key, initial_data[key])
-            
-    def _getName(self):
-            return self.__class__.__name__
         
+    @property    
+    def getName(self):
+        return self.__class__.__name__
+    
+    
         
     @property
     def scan_list(self):
-        vars(self)
+        return [var for var in vars(self) if not var.startswith("_")]
         
         # return [var for var in vars(self) if not var.startswith("_")]
     
@@ -202,7 +203,8 @@ class Paitent(object):
         len(self.scan_list)
         
     def __iter__(self): 
-        return iter(self.scan_list.values())
+        newdict = {k: vars(self)[k] for k in [var for var in vars(self) if not var.startswith("_")]}
+        return iter(newdict.values())
     
     def __repr__(self):
         attrs = list(vars(self))
@@ -211,7 +213,7 @@ class Paitent(object):
         return f"Paitent Object concisting of {no_scans} scans : {attr_string(attrs)}"
 
 
-class Scan:
+class Scan(object):
     
     def __init__(self, title, dcm_series, paitent_ID=None):
         self.paitent_ID = paitent_ID
