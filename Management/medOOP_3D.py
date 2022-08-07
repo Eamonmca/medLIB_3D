@@ -190,8 +190,6 @@ class Paitent(object):
     def getName(self):
         return self.__class__.__name__
     
-    
-        
     @property
     def scan_list(self):
         return [var for var in vars(self) if not var.startswith("_")]
@@ -222,8 +220,7 @@ class Scan(object):
         self.dcm_series = dcm_series
         self.paitent_ID = paitent_ID
         
-    
-    
+    @property 
     def getName(self):
         return self.__class__.__name__
          
@@ -250,7 +247,11 @@ class Scan(object):
 
         if image_format == "PNG":
             for idx in range(no_idx):
-                out_path = (f"{output_root_dir}/{name}_{idx}.png")
+                try:
+                    os.mkdir(os.path.join(output_root_dir,self.paitent_ID))
+                except FileExistsError:
+                    pass
+                out_path = (f"{output_root_dir}/{self.paitent_ID}/{name}_{idx}.png")
                 image = volume_3D[idx,:,:]
                 image = np.uint8(image)
                 print(cv2.imwrite(out_path, image))
@@ -258,7 +259,11 @@ class Scan(object):
 
         elif image_format == "TIFF":
             for idx in range(no_idx):
-                out_path = (f"{output_root_dir}/{name}_{idx}.tiff")
+                try:
+                    os.mkdir(os.path.join(output_root_dir,self.paitent_ID))
+                except FileExistsError:
+                    pass
+                out_path = (f"{output_root_dir}/{self.paitent_ID}/{name}_{idx}.png")
                 image = volume_3D[idx,:,:]
                 image = np.uint16(image)
                 print(cv2.imwrite(out_path, image))
@@ -279,8 +284,6 @@ class Scan(object):
         fig = px.imshow(img, animation_frame=0, binary_string=True, labels=dict(animation_frame="slice"), title= "CT_SCAN",)
         fig.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 50
         
-        
-
         if fig :
             return fig
         else:
