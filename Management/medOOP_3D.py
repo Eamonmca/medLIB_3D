@@ -205,7 +205,7 @@ class Paitent(object):
         return iter(newdict.values())
     
     def __repr__(self):
-        attrs = list(vars(self))
+        attrs = [var for var in vars(self) if not var.startswith("_")]
         no_scans = len(attrs)
         attr_string = lambda x: ', '.join(x)
         return f"Paitent Object concisting of {no_scans} scans : {attr_string(attrs)}"
@@ -237,7 +237,7 @@ class Scan(object):
 
 
 
-    def Vol_to_slices(self, output_root_dir, image_format = "PNG"):
+    def Vol_to_slices(self, output_root_dir, image_format = "PNG", return_list = False):
         volume_3D = self.vol
         no_idx = self.vol.shape[0]
         name = self.title
@@ -275,8 +275,8 @@ class Scan(object):
 
 
         else : print("Unsupported Image format for slices detected. Support may be added in future if deemed appropriate.")
-
-        return slice_image_list
+        if return_list:
+            return slice_image_list
 
     
     def display_3D_volume(self, fig=False):
