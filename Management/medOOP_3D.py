@@ -226,7 +226,11 @@ class Scan(object):
          
     def write_nifti(self, output_path):
         nifti_file = nibabel.Nifti1Image(self.vol, self.affine)
-        output_path = f"{output_path}/{self.title}.nii.gz"
+        try:
+            os.mkdir(os.path.join(output_path,self.paitent_ID))
+        except FileExistsError:
+            pass
+        output_path = f"{output_path}/{self.paitent_ID}/{self.title}.nii.gz"
         nibabel.save(nifti_file, output_path)
     
         return output_path
@@ -254,7 +258,7 @@ class Scan(object):
                 out_path = (f"{output_root_dir}/{self.paitent_ID}/{name}_{idx}.png")
                 image = volume_3D[idx,:,:]
                 image = np.uint8(image)
-                print(cv2.imwrite(out_path, image))
+                cv2.imwrite(out_path, image)
                 slice_image_list.append(out_path)
 
         elif image_format == "TIFF":
@@ -266,7 +270,7 @@ class Scan(object):
                 out_path = (f"{output_root_dir}/{self.paitent_ID}/{name}_{idx}.png")
                 image = volume_3D[idx,:,:]
                 image = np.uint16(image)
-                print(cv2.imwrite(out_path, image))
+                cv2.imwrite(out_path, image)
                 slice_image_list.append(out_path)
 
 
