@@ -208,7 +208,12 @@ class Paitent(object):
         attrs = [var for var in vars(self) if not var.startswith("_")]
         no_scans = len(attrs)
         attr_string = lambda x: ', '.join(x)
-        return f"Paitent Object concisting of {no_scans} scans : {attr_string(attrs)}"
+        if paitent_ID:
+            return f"Paitent object {paitent_id} concisting of {no_scans} scans : {attr_string(attrs)}"
+        else:
+            return f"Paitent Object concisting of {no_scans} scans : {attr_string(attrs)}"
+        
+        
 
 
 class Scan(object):
