@@ -158,10 +158,12 @@ def get_scan_dict(dcm_series, paitent_ID):
 
 class Dataset(object):
     def __init__(self, paired_list):
-        for pair in tqdm(paired_list):
+        pbar = tqdm(paired_list)
+        for pair in pbar:
             path = pair[0]
             title = processString(pair[1])
             setattr(self, title, Paitent(path, paitent_ID=title))
+            pbar.set_description("Processing %s" % title)
         
     @property
     def paitent_list(self):
