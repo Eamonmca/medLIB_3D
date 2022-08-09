@@ -296,7 +296,6 @@ class Scan(object):
             return fig.show()
     
     
-    
     def __repr__(self):
         return f"Scan Object titled {self.title}, with dimensions {self.vol.shape}"
 
