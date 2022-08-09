@@ -173,6 +173,9 @@ class Dataset(object):
     def num_paitents(self):
         return len(vars(self))
     
+    def __len__(self):
+        return len(self.paitent_list)
+    
     def __iter__(self):
         newdict = {k: vars(self)[k] for k in [var for var in vars(self) if not var.startswith("_")]}
         return iter(newdict.values())
@@ -205,6 +208,13 @@ class Paitent(object):
     def __iter__(self): 
         newdict = {k: vars(self)[k] for k in [var for var in vars(self) if not var.startswith("_")]}
         return iter(newdict.values())
+    
+    def __getitem__(self, key):
+        return vars(self)[key]
+     
+    def __len__(self):
+        return len(self.scan_list)
+    
     
     def __repr__(self):
         attrs = [var for var in vars(self) if not var.startswith("_")]
