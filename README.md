@@ -12,4 +12,4 @@
 
 # Funtionality Demonstration
 
-Demonstration of how to use the library and it's different capabilites are available in the functionality demonstation [here](https://github.com/Eamonmca/medLIB_3D/blob/main/Functionality_demo.ipynb)
+Demonstration of how to use the library and it's different capabilities are available in the functionality demonstration [here](https://github.com/Eamonmca/medLIB_3D/blob/main/Functionality_demo.ipynb)
