@@ -133,13 +133,13 @@ def dicom_to_volume(dicom_series):
 
 
 
-def get_scan_dict(dcm_series, paitent_ID):
+def get_scan_dict(dcm_series, patient_ID):
     '''
     '''
-    paitent_dcm_collection = pread(dcm_series)
+    patient_dcm_collection = pread(dcm_series)
     scan_dict = {}
     new_scan_dict = {}
-    for scan in paitent_dcm_collection:
+    for scan in patient_dcm_collection:
         series_description = processString(scan.info.SeriesDescription)
         if series_description in [""] :
             series_description = "UNNAMED_SERIES"
@@ -150,7 +150,7 @@ def get_scan_dict(dcm_series, paitent_ID):
         scan_dict[f"{series_description}"] = dicom_series
 
     for k in scan_dict:
-        new_scan_dict[k] = Scan(k, scan_dict[k], paitent_ID)
+        new_scan_dict[k] = Scan(k, scan_dict[k], patient_ID)
         
     return new_scan_dict
 
@@ -162,32 +162,32 @@ class Dataset(object):
         for pair in pbar:
             path = pair[0]
             title = processString(pair[1])
-            setattr(self, title, Paitent(path, paitent_ID=title))
+            setattr(self, title, Patient(path, patient_ID=title))
             pbar.set_description("Processing %s" % title)
         
     @property
-    def paitent_list(self):
+    def patient_list(self):
         return [var for var in vars(self) if not var.startswith("_")]
     
     @property
-    def num_paitents(self):
+    def num_patients(self):
         return len(vars(self))
     
     def __len__(self):
-        return len(self.paitent_list)
+        return len(self.patient_list)
     
     def __iter__(self):
         newdict = {k: vars(self)[k] for k in [var for var in vars(self) if not var.startswith("_")]}
         return iter(newdict.values())
     
 
-class Paitent(object):
-    def __init__(self, initial_data, paitent_ID = None):
-        if paitent_ID is None:
-            self._paitent_ID ="UNNAMED_PATIENT"
+class Patient(object):
+    def __init__(self, initial_data, patient_ID = None):
+        if patient_ID is None:
+            self._patient_ID ="UNNAMED_PATIENT"
         else:
-            self._paitent_ID = paitent_ID
-        initial_data = get_scan_dict(initial_data, paitent_ID)
+            self._patient_ID = patient_ID
+        initial_data = get_scan_dict(initial_data, patient_ID)
         for key in initial_data:
             setattr(self, key, initial_data[key])
         
@@ -200,6 +200,11 @@ class Paitent(object):
         return [var for var in vars(self) if not var.startswith("_")]
         
         # return [var for var in vars(self) if not var.startswith("_")]
+        
+    @property
+    def patient_id(self):
+        return self._patient_ID
+    
     
     @property
     def num_scans(self):
@@ -220,17 +225,17 @@ class Paitent(object):
         attrs = [var for var in vars(self) if not var.startswith("_")]
         no_scans = len(attrs)
         attr_string = lambda x: ', '.join(x)
-        return f"Paitent Object concisting of {no_scans} scans : {attr_string(attrs)}"
+        return f"Patient Object concisting of {no_scans} scans : {attr_string(attrs)}"
     
 
 class Scan(object):
     
-    def __init__(self, title, dcm_series, paitent_ID=None):
-        self.paitent_ID = paitent_ID
+    def __init__(self, title, dcm_series, patient_ID=None):
+        self.patient_ID = patient_ID
         self.vol, self.pix_dim, self.affine = dicom_to_volume(dcm_series)
         self.title = title
         self.dcm_series = dcm_series
-        self.paitent_ID = paitent_ID
+        self.patient_ID = patient_ID
         
     @property 
     def getName(self):
@@ -239,10 +244,10 @@ class Scan(object):
     def write_nifti(self, output_path):
         nifti_file = nibabel.Nifti1Image(self.vol, self.affine)
         try:
-            os.mkdir(os.path.join(output_path,self.paitent_ID))
+            os.mkdir(os.path.join(output_path,self.patient_ID))
         except FileExistsError:
             pass
-        output_path = f"{output_path}/{self.paitent_ID}/{self.title}.nii.gz"
+        output_path = f"{output_path}/{self.patient_ID}/{self.title}.nii.gz"
         nibabel.save(nifti_file, output_path)
     
         return output_path
@@ -264,10 +269,10 @@ class Scan(object):
         if image_format == "PNG":
             for idx in range(no_idx):
                 try:
-                    os.mkdir(os.path.join(output_root_dir,self.paitent_ID))
+                    os.mkdir(os.path.join(output_root_dir,self.patient_ID))
                 except FileExistsError:
                     pass
-                out_path = (f"{output_root_dir}/{self.paitent_ID}/{name}_{idx}.png")
+                out_path = (f"{output_root_dir}/{self.patient_ID}/{name}_{idx}.png")
                 image = volume_3D[idx,:,:]
                 image = np.uint8(image)
                 cv2.imwrite(out_path, image)
@@ -276,10 +281,10 @@ class Scan(object):
         elif image_format == "TIFF":
             for idx in range(no_idx):
                 try:
-                    os.mkdir(os.path.join(output_root_dir,self.paitent_ID))
+                    os.mkdir(os.path.join(output_root_dir,self.patient_ID))
                 except FileExistsError:
                     pass
-                out_path = (f"{output_root_dir}/{self.paitent_ID}/{name}_{idx}.png")
+                out_path = (f"{output_root_dir}/{self.patient_ID}/{name}_{idx}.png")
                 image = volume_3D[idx,:,:]
                 image = np.uint16(image)
                 cv2.imwrite(out_path, image)
