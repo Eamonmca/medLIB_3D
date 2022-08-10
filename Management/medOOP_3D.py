@@ -296,14 +296,16 @@ class Scan(object):
             return slice_image_list
 
     
-    def display_3D_volume(self, fig=False):
+    def display(self, fig=False):
         
         if is_notebook:
             pio.renderers.default = 'notebook_connected'
-
-        img = self.vol
-        fig = px.imshow(img, animation_frame=0, binary_string=True, labels=dict(animation_frame="slice"), title= "CT_SCAN",)
-        fig.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 50
+        
+        if self.vol.shape[0] == 1:
+            fig = px.imshow(self.vol[0,:,:] , title=str(self.title), binary_string=True)
+        else:
+            fig = px.imshow(self.vol, animation_frame=0, binary_string=True, labels=dict(animation_frame="slice"), title= str(self.title))
+            fig.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 50
         
         if fig :
             return fig
