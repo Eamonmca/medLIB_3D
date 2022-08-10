@@ -295,7 +295,7 @@ class Scan(object):
         if return_list:
             return slice_image_list
 
-    
+     
     def display(self, fig=False):
         
         if is_notebook:
