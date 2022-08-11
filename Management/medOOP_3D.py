@@ -1,5 +1,3 @@
-from turtle import title
-
 from attr import attrs
 from  Parsing.parse_funcs import *
 from Github_code.contrib_pydicom.input_output.pydicom_series import read_files as pread
@@ -11,6 +9,8 @@ import cv2
 import os
 from tqdm import tqdm
 from Utils.utils import *
+import SimpleITK as sitk
+
 
 
 
@@ -64,28 +64,23 @@ class Dataset(object):
 
 class Patient(object):
     def __init__(self, initial_data, patient_ID = None):
+        
         if patient_ID is None:
             self._patient_ID ="UNNAMED_PATIENT"
         else:
             self._patient_ID = patient_ID
+            
         initial_data = get_scan_dict(initial_data, patient_ID)
         for key in initial_data:
             setattr(self, key, initial_data[key])
-        
-    @property    
-    def getName(self):
-        return self.__class__.__name__
     
     @property
     def scan_list(self):
         return [var for var in vars(self) if not var.startswith("_")]
-        
-        # return [var for var in vars(self) if not var.startswith("_")]
-        
+
     @property
     def patient_id(self):
         return self._patient_ID
-    
     
     @property
     def num_scans(self):
@@ -100,7 +95,6 @@ class Patient(object):
      
     def __len__(self):
         return len(self.scan_list)
-    
     
     def __repr__(self):
         attrs = [var for var in vars(self) if not var.startswith("_")]
@@ -122,7 +116,7 @@ class Scan(object):
     def getName(self):
         return self.__class__.__name__
          
-    def write_nifti(self, output_path):
+    def to_nifti(self, output_path):
         nifti_file = nibabel.Nifti1Image(self.vol, self.affine)
         try:
             os.mkdir(os.path.join(output_path,self.patient_ID))
@@ -132,10 +126,36 @@ class Scan(object):
         nibabel.save(nifti_file, output_path)
     
         return output_path
+    
+    def to_dicom(self, output_root_dir):
+        volume_3D = self.vol
+        no_idx = self.vol.shape[0]
+        name = self.title
+        
+        try:
+            os.mkdir(output_root_dir)
+        except FileExistsError:
+            pass
+        
+        for idx in range(no_idx):
+                try:
+                    os.mkdir(os.path.join(output_root_dir,self.patient_ID))
+                except FileExistsError:
+                    pass
+                out_path = (f"{output_root_dir}/{self.patient_ID}/{name}_{idx}.dcm")
+                image = volume_3D[idx,:,:]
+                image = sitk.GetImageFromArray(image)
+                castFilter = sitk.CastImageFilter()
+                castFilter.SetOutputPixelType(sitk.sitkInt16)
+
+                # Convert floating type image (imgSmooth) to int type (imgFiltered)
+                image = castFilter.Execute(image)
+                sitk.WriteImage(image,out_path)
+            
+        return output_path
 
 
-
-    def Vol_to_slices(self, output_root_dir, image_format = "PNG", return_list = False):
+    def to_slices(self, output_root_dir, image_format = "PNG", return_list = False):
         volume_3D = self.vol
         no_idx = self.vol.shape[0]
         name = self.title
@@ -175,6 +195,7 @@ class Scan(object):
         else : print("Unsupported Image format for slices detected. Support may be added in future if deemed appropriate.")
         if return_list:
             return slice_image_list
+        
 
      
     def display(self, fig=False):
